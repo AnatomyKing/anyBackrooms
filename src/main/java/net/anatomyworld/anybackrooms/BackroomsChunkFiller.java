@@ -38,6 +38,7 @@ public final class BackroomsChunkFiller {
     private static final int CEILING_PAD      = 2;       // extra offset for the ceiling slab
     private static final int VISIBLE_WALL_UP  = HEADROOM + 4; // how high the wall we build is
 
+
     // Blocks we use (simple palette)
     private static final BlockState WALL              = Blocks.YELLOW_TERRACOTTA.defaultBlockState();
     private static final BlockState WALL_TRIM         = Blocks.SMOOTH_SANDSTONE.defaultBlockState(); // baseboard at y+2
