@@ -14,20 +14,11 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayDeque;
-import java.util.LinkedHashMap;
 import java.util.Map;
+// (feedback applied) concurrent, lock-free cache primitives:
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * Backrooms chunk filler
- *
- * What this does:
- * 1. Plans a maze-like region from the world seed.
- * 2. Draws corridors + rooms + cozy rings + special reward rooms.
- * 3. Places lights nicely.
- * 4. Lays carpet, walls, and a simple ceiling.
- * We store only EAST and SOUTH openings per cell,
- * and derive WEST and NORTH from neighbors when we need them.
- */
 public final class BackroomsChunkFiller {
 
     private BackroomsChunkFiller() {} // no instances
@@ -508,20 +499,32 @@ public final class BackroomsChunkFiller {
     private static final class RegionCache {
         private static final int MAX = 128;
 
-        private static final Map<Long, Region> LRU = new LinkedHashMap<>(MAX, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<Long, Region> eldest) {
-                return this.size() > MAX;
-            }
-        };
+        // LinkedHashMap with lock-free structures:
+        // ConcurrentHashMap for the entries
+        // ConcurrentLinkedQueue to approximate LRU eviction without global locks
+        private static final ConcurrentHashMap<Long, Region> LRU =
+                new ConcurrentHashMap<>();
+        private static final ConcurrentLinkedQueue<Long> ORDER =
+                new ConcurrentLinkedQueue<>();
 
         static Region get(ServerLevel level, int regionX, int regionZ) {
             long key = (((long) regionX) << 32) ^ (regionZ & 0xFFFFFFFFL) ^ (level.getSeed() * 0x9E3779B97F4A7C15L);
-            synchronized (LRU) {
-                Region r = LRU.get(key);
-                if (r == null) { r = new Region(level, regionX, regionZ); LRU.put(key, r); }
-                return r;
-            }
+
+            // Atomic, computeIfAbsent does a CAS loop internally
+            return LRU.computeIfAbsent(key, k -> {
+                ORDER.add(k);
+
+                // Opportunistic, lock-free bounding
+                // If many threads add at once, multiple evictions may run, which is fine.
+                while (LRU.size() > MAX) {
+                    Long victim = ORDER.poll();
+                    if (victim == null) break;
+                    if (victim.equals(k)) continue; // avoid evicting the one we're creating
+                    LRU.remove(victim);
+                }
+
+                return new Region(level, regionX, regionZ);
+            });
         }
     }
 
