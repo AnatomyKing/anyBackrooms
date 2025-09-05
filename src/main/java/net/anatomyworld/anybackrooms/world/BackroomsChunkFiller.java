@@ -1,4 +1,4 @@
-package net.anatomyworld.anybackrooms;
+package net.anatomyworld.anybackrooms.world;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayDeque;
-import java.util.Map;
 // (feedback applied) concurrent, lock-free cache primitives:
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
