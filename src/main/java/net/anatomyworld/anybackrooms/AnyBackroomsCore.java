@@ -8,20 +8,23 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 
-// === add these ===
-import net.anatomyworld.anybackrooms.item.ModItems;
+// registries + client/datagen
 import net.anatomyworld.anybackrooms.block.ModBlocks;
+import net.anatomyworld.anybackrooms.item.ModItems;
 import net.anatomyworld.anybackrooms.item.ModCreativeTabs;
-// (and your BackroomsChunkFiller import if it’s in this mod)
+import net.anatomyworld.anybackrooms.data.ModDataGenerators;
+import net.anatomyworld.anybackrooms.client.render.AnybackroomsRenderLayers;
 
 @Mod(AnyBackroomsCore.MOD_ID)
 public final class AnyBackroomsCore {
@@ -37,14 +40,28 @@ public final class AnyBackroomsCore {
 
         // --- registry wires ---
         ModBlocks.register(modBus);
-        ModItems.register(modBus);
+        ModItems.register(modBus);       // <- you already call this; keep it
         ModCreativeTabs.register(modBus);
+
+        // --- datagen providers (client/server providers can be added here) ---
+        modBus.addListener(this::commonSetup);
+        container.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
+        modBus.addListener(ModDataGenerators::gatherData);
+
+        // --- client-only render layer shim (safe even if currently empty) ---
+        if (FMLLoader.getDist().isClient()) {
+            modBus.addListener(AnybackroomsRenderLayers::onModifyBakingResult);
+        }
 
         modBus.addListener(this::setup);
     }
 
     private void setup(final FMLCommonSetupEvent e) {
         // common setup if needed
+    }
+
+    private void commonSetup(final FMLCommonSetupEvent e) {
+        // shared init if needed
     }
 
     /** Handles chunk population on the (logical) server in both dedicated + singleplayer. */

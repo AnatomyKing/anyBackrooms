@@ -1,20 +1,23 @@
 package net.anatomyworld.anybackrooms;
 
-import net.minecraft.world.item.Item;
-
-import java.util.Set;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Zero-IO placeholder config.
- * - No ModConfigSpec
- * - No events
- * - Safe defaults that keep your existing references working
+ * Basic empty config for HarambeCore.
+ * You can add options later by adding entries to the SPEC builder.
  */
 public final class Config {
-    private Config() {}
+    public static final ModConfigSpec COMMON_SPEC;
+    static {
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
-    public static final boolean logDirtBlock = false;
-    public static final int     magicNumber  = 42;
-    public static final String  magicNumberIntroduction = "The magic number is... ";
-    public static final Set<Item> items = Set.of();
+        // Example placeholder option (disabled by default, does nothing yet)
+        builder.push("general");
+        builder.comment("Example setting you can toggle in the future");
+        builder.define("exampleOption", false);
+        builder.pop();
+
+        COMMON_SPEC = builder.build();
+    }
 }
