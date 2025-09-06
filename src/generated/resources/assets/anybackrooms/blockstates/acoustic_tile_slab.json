@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "anybackrooms:block/acoustic_tile_slab"
+    },
+    "type=double": {
+      "model": "anybackrooms:block/acoustic_tile"
+    },
+    "type=top": {
+      "model": "anybackrooms:block/acoustic_tile_slab_top"
+    }
+  }
+}

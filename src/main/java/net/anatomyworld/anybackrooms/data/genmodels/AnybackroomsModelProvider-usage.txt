@@ -1,0 +1,229 @@
+
+AnybackroomsModelProvider — Usage Examples for TrivialBlock + VanillaCopy (NeoForge 1.21.8)
+===========================================================================================
+
+Put these calls inside `registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels)`
+in your `AnybackroomsModelProvider`. Adjust the ModBlocks names to your registry.
+
+--------------------------------------------------------------------
+TRIVIAL BLOCK HELPERS (simple blockstates via createTrivialBlock)
+--------------------------------------------------------------------
+
+1) cube_all
+-----------
+/** Uses block/<id>.png */
+TrivialBlock.cubeAll(blockModels,
+        ModBlocks.LOBBY_WOOL.get(),
+        ModBlocks.SMOOTH_TILE.get()
+);
+
+2) column (vertical model; if you want horizontal too, use VanillaCopy.pillarAuto)
+----------------------------------------------------------------------------------
+/** Auto: side=<id>.png, end=<id>_top.png */
+TrivialBlock.columnAuto(blockModels,
+        ModBlocks.LOBBY_WALLPAPER.get()
+);
+
+/** Override specific textures */
+TrivialBlock.columnOverride(blockModels,
+        ModBlocks.LOBBY_WALLPAPER_PLINTH.get(),
+        TrivialBlock.texOf(ModBlocks.LOBBY_WALLPAPER_PLINTH.get()),     // side
+        TrivialBlock.texOf(ModBlocks.LOBBY_WALLPAPER.get(), "_top")     // end
+);
+
+3) barrel-like (cube_bottom_top)
+--------------------------------
+/** Auto: side=<id>, top=<id>_top, bottom=<id>_bottom */
+TrivialBlock.barrelLikeAuto(blockModels,
+        ModBlocks.METAL_CRATE.get()
+);
+
+/** Override */
+TrivialBlock.barrelLikeOverride(blockModels,
+        ModBlocks.WOODEN_CRATE.get(),
+        TrivialBlock.texOf(ModBlocks.WOODEN_CRATE.get()),        // side
+        TrivialBlock.texOf(ModBlocks.WOODEN_CRATE.get(), "_top"),// top
+        TrivialBlock.texOf(ModBlocks.WOODEN_CRATE.get(), "_bottom") // bottom
+);
+
+4) orientable (front/top/side, no property logic)
+-------------------------------------------------
+/** side=..., front=..., top=... (bottom uses side) */
+TrivialBlock.orientable(blockModels,
+        ModBlocks.LOBBY_FURNACE.get(),
+        TrivialBlock.texOf(ModBlocks.LOBBY_FURNACE.get()),          // side
+        ResourceLocation.parse("anybackrooms:block/lobby_furnace_front"), // front
+        TrivialBlock.texOf(ModBlocks.LOBBY_FURNACE.get(), "_top")   // top
+);
+
+5) cross (plants, 2D X)
+-----------------------
+/** Uses block/<id>.png with renderType=cutout at runtime */
+TrivialBlock.cross(blockModels,
+        ModBlocks.LOBBY_PLANT.get()
+);
+
+
+---------------------------------------------------------
+VANILLA COPY HELPERS (full vanilla-like blockstates)
+---------------------------------------------------------
+
+A) cube_all (same as trivial but kept here for symmetry)
+-------------------------------------------------------
+VanillaCopy.vanillaCube(blockModels,
+        ModBlocks.LOBBY_TILE.get()
+);
+
+B) pillar with horizontal variant (quartz/log-like)
+---------------------------------------------------
+/** Auto: side=<id>, end=<id>_top; includes horizontal model */
+VanillaCopy.pillarAuto(blockModels,
+        ModBlocks.MARBLE_PILLAR.get()
+);
+
+C) orientable (furnace-like with horizontal rotation)
+-----------------------------------------------------
+/** side/front/top */
+VanillaCopy.orientable(blockModels,
+        ModBlocks.LOBBY_FURNACE.get(),
+        VanillaCopy.texOf(ModBlocks.LOBBY_FURNACE.get()),             // side
+        ResourceLocation.parse("anybackrooms:block/lobby_furnace_front_lit"), // front
+        VanillaCopy.texOf(ModBlocks.LOBBY_FURNACE.get(), "_top")      // top
+);
+
+D) slabs
+--------
+/** Auto: takes the slab + its full block (for DOUBLE). Expects <id>, <id>_top, <id>_bottom. */
+VanillaCopy.slabAuto(blockModels,
+        ModBlocks.LOBBY_TILE_SLAB.get(),
+        ModBlocks.LOBBY_TILE.get()
+);
+
+/** Override the textures explicitly (and pass the double model you want). */
+VanillaCopy.slabOverride(blockModels,
+        ModBlocks.MARBLE_SLAB.get(),
+        ResourceLocation.parse("anybackrooms:block/marble"),          // side
+        ResourceLocation.parse("anybackrooms:block/marble_top"),      // top
+        ResourceLocation.parse("anybackrooms:block/marble_bottom"),   // bottom
+        ResourceLocation.parse("anybackrooms:block/marble_full")      // model for double slab
+);
+
+E) stairs
+---------
+/** Auto from naming convention (<id>, <id>_top, <id>_bottom). */
+VanillaCopy.stairsAuto(blockModels,
+        ModBlocks.LOBBY_TILE_STAIRS.get()
+);
+
+/** Override textures explicitly. */
+VanillaCopy.stairsOverride(blockModels,
+        ModBlocks.MARBLE_STAIRS.get(),
+        ResourceLocation.parse("anybackrooms:block/marble"),        // side
+        ResourceLocation.parse("anybackrooms:block/marble_top"),    // top
+        ResourceLocation.parse("anybackrooms:block/marble_bottom")  // bottom
+);
+
+F) walls
+--------
+/** Auto: post/side/tall from <id>, <id>_top, <id>_bottom */
+VanillaCopy.wallAuto(blockModels,
+        ModBlocks.LOBBY_TILE_WALL.get()
+);
+
+/** Override */
+VanillaCopy.wallOverride(blockModels,
+        ModBlocks.MARBLE_WALL.get(),
+        ResourceLocation.parse("anybackrooms:block/marble"),
+        ResourceLocation.parse("anybackrooms:block/marble_top"),
+        ResourceLocation.parse("anybackrooms:block/marble_bottom")
+);
+
+G) fences
+---------
+/** Auto: uses block/<id>.png for post+rail */
+VanillaCopy.fenceAuto(blockModels,
+        ModBlocks.LOBBY_FENCE.get()
+);
+
+/** Override */
+VanillaCopy.fenceOverride(blockModels,
+        ModBlocks.MARBLE_FENCE.get(),
+        ResourceLocation.parse("anybackrooms:block/marble")
+);
+
+H) cross/plant (vanilla-like single-variant blockstate)
+------------------------------------------------------
+VanillaCopy.crossAuto(blockModels,
+        ModBlocks.LOBBY_WEEDS.get()
+);
+
+/** Override */
+VanillaCopy.crossOverride(blockModels,
+        ModBlocks.MARBLE_FLOWER.get(),
+        ResourceLocation.parse("anybackrooms:block/marble_flower")
+);
+
+I) glass (full block)
+---------------------
+/** Parents to minecraft:block/glass, AO off, translucent render type. */
+VanillaCopy.glassAuto(blockModels,
+        ModBlocks.LOBBY_GLASS.get()
+);
+
+/** Override texture explicitly */
+VanillaCopy.glassOverride(blockModels,
+        ModBlocks.FROSTED_GLASS.get(),
+        ResourceLocation.parse("anybackrooms:block/frosted_glass")
+);
+
+J) glass panes (multipart like vanilla)
+--------------------------------------
+/** Auto: pane=block/<id>.png, edge=block/<id>_top.png */
+VanillaCopy.paneAuto(blockModels,
+        ModBlocks.LOBBY_GLASS_PANE.get()
+);
+
+/** Override pane/edge */
+VanillaCopy.paneOverride(blockModels,
+        ModBlocks.FROSTED_GLASS_PANE.get(),
+        ResourceLocation.parse("anybackrooms:block/frosted_glass"),
+        ResourceLocation.parse("anybackrooms:block/frosted_glass_top")
+);
+
+K) portal-like (nether portal axis switch)
+------------------------------------------
+/** Maps AXIS=X to minecraft:block/nether_portal_ns and AXIS=Z to .../nether_portal_ew.
+ *  Use this if you want your custom portal block to reuse the vanilla animated models.
+ */
+VanillaCopy.portalVanillaCopy(blockModels,
+        ModBlocks.MY_PORTAL_BLOCK.get()
+);
+
+L) lit/unlit example (simple lamp switch)
+-----------------------------------------
+/** Expects block/<id>.png and block/<id>_on.png; blockstate switches on LIT. */
+VanillaCopy.lampAuto(blockModels,
+        ModBlocks.FLUORESCENT_LAMP.get()
+);
+
+
+----------------------------------
+Item examples (for completeness):
+----------------------------------
+itemModels.generateFlatItem(ModItems.ALMOND_WATER.get(), ModelTemplates.FLAT_ITEM);
+itemModels.generateFlatItem(ModItems.LOBBY_KEYCARD.get(), ModelTemplates.FLAT_ITEM);
+
+
+----------------------------------
+Texture naming quick reference:
+----------------------------------
+- cube_all:                     block/<id>.png
+- pillar:                       side=block/<id>.png, end=block/<id>_top.png
+- barrel-like:                  side=block/<id>.png, top=block/<id>_top.png, bottom=block/<id>_bottom.png
+- orientable:                   side/front/top (bottom uses side)
+- slab & stairs & wall:         side/top/bottom as above
+- fence:                        texture=block/<id>.png
+- cross:                        cross=block/<id>.png
+- glass block:                  all=block/<id>.png (parent=minecraft:block/glass)
+- glass pane:                   pane=block/<id>.png, edge=block/<id>_top.png
+- lampAuto:                     base=block/<id>.png, lit=block/<id>_on.png

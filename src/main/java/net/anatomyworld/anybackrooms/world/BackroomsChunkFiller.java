@@ -1,5 +1,6 @@
 package net.anatomyworld.anybackrooms.world;
 
+import net.anatomyworld.anybackrooms.block.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -30,14 +31,14 @@ public final class BackroomsChunkFiller {
 
 
     // Blocks we use (simple palette)
-    private static final BlockState WALL              = Blocks.YELLOW_TERRACOTTA.defaultBlockState();
-    private static final BlockState WALL_TRIM         = Blocks.SMOOTH_SANDSTONE.defaultBlockState(); // baseboard at y+2
+    private static final BlockState WALL              = ModBlocks.LOBBY_WALLPAPER.get().defaultBlockState();
+    private static final BlockState WALL_TRIM         = ModBlocks.LOBBY_WALLPAPER_PLINTH.get().defaultBlockState(); // baseboard at y+2
     private static final BlockState UNDER_CEILING     = Blocks.STONE.defaultBlockState();
-    private static final BlockState CARPET            = Blocks.LIGHT_GRAY_WOOL.defaultBlockState();
+    private static final BlockState CARPET            = ModBlocks.LOBBY_WOOL.get().defaultBlockState();
     private static final BlockState BEDROCK           = Blocks.BEDROCK.defaultBlockState();
-    private static final BlockState LAMP_ON           = Blocks.REDSTONE_LAMP.defaultBlockState().setValue(RedstoneLampBlock.LIT, true);
+    private static final BlockState LAMP_ON           = ModBlocks.FLUORESCENT_LAMP.get().defaultBlockState().setValue(RedstoneLampBlock.LIT, true);
     private static final BlockState REDSTONE_BLOCK    = Blocks.REDSTONE_BLOCK.defaultBlockState();
-    private static final BlockState CEILING_SLAB_TOP  = Blocks.SMOOTH_STONE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
+    private static final BlockState CEILING_SLAB_TOP  = ModBlocks.ACOUSTIC_TILE_SLAB.get().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
 
     // Grid shape (cells inside a “tile”, plus a thin wall line)
     private static final int CELL_SIZE     = 6;                  // walk area inside each tile

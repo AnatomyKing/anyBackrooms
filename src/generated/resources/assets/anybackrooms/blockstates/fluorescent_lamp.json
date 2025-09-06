@@ -1,0 +1,20 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "anybackrooms:block/fluorescent_lamp"
+      },
+      "when": {
+        "lit": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "anybackrooms:block/fluorescent_lamp_on"
+      },
+      "when": {
+        "lit": "true"
+      }
+    }
+  ]
+}
