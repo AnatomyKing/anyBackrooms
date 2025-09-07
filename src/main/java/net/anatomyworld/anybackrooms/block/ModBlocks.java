@@ -1,6 +1,8 @@
 package net.anatomyworld.anybackrooms.block;
 
 import net.anatomyworld.anybackrooms.AnyBackroomsCore;
+import net.anatomyworld.anybackrooms.block.custom.DrillPistonBaseBlock;
+import net.anatomyworld.anybackrooms.block.custom.DrillPistonHeadBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -66,6 +68,8 @@ public final class ModBlocks {
                             .noLootTable()
                     ));
 
+
+
     /**
      * FLUORESCENT_LAMP — redstone lamp behavior, but unbreakable, no drops, immovable.
      * NOTE: Do NOT use ofFullCopy(...) here; keep the provided `props` so the ID stays set.
@@ -95,6 +99,33 @@ public final class ModBlocks {
                             .noLootTable()
                     ));
 
+
+    // Piston drills
+    public static final DeferredBlock<DrillPistonBaseBlock> DRILL_PISTON =
+            BLOCKS.registerBlock("drill_piston",
+                    props -> new DrillPistonBaseBlock(false, props),
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.PISTON)
+                            .strength(1.5F).sound(SoundType.METAL)
+                            .noLootTable()
+            );
+
+    public static final DeferredBlock<DrillPistonBaseBlock> STICKY_DRILL_PISTON =
+            BLOCKS.registerBlock("sticky_drill_piston",
+                    props -> new DrillPistonBaseBlock(true, props),
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.STICKY_PISTON)
+                            .strength(1.5F).sound(SoundType.METAL)
+                            .noLootTable()
+            );
+
+    public static final DeferredBlock<DrillPistonHeadBlock> DRILL_PISTON_HEAD =
+            BLOCKS.registerBlock("drill_piston_head",
+                    DrillPistonHeadBlock::new,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.PISTON_HEAD)
+                            .noOcclusion()
+                            .noLootTable()
+            );
+
+
     // The slab itself.
     public static final DeferredBlock<SlabBlock> ACOUSTIC_TILE_SLAB =
             BLOCKS.registerBlock("acoustic_tile_slab",
@@ -111,7 +142,7 @@ public final class ModBlocks {
      * If you later add blocks that should NOT have items, put them in this set.
      */
     private static final Set<DeferredHolder<Block, ? extends Block>> SKIP_BLOCK_ITEMS = Set.of(
-            // e.g. portal blocks, fluids, etc.
+            DRILL_PISTON_HEAD
     );
 
     static {

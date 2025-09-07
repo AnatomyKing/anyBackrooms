@@ -3,6 +3,7 @@ package net.anatomyworld.anybackrooms.data.genmodels;
 import com.mojang.math.Quadrant;
 import net.anatomyworld.anybackrooms.AnyBackroomsCore;
 import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.MultiVariant;
 import net.minecraft.client.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
@@ -13,11 +14,17 @@ import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
+import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.PistonType;
+
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Optional;
 
 /**
  * Vanilla-like generators for NeoForge 1.21.x client datagen.
@@ -58,8 +65,8 @@ public final class VanillaCopy {
     /** Use the full block’s textures and reference its cube_all model (don’t recreate it). */
     public static void slabAuto(BlockModelGenerators gen, Block slab, Block fullBlockForDouble) {
         TextureMapping map = new TextureMapping()
-                .put(TextureSlot.SIDE, texOf(fullBlockForDouble))
-                .put(TextureSlot.TOP,  texOf(fullBlockForDouble, "_top"))
+                .put(TextureSlot.SIDE,   texOf(fullBlockForDouble))
+                .put(TextureSlot.TOP,    texOf(fullBlockForDouble, "_top"))
                 .put(TextureSlot.BOTTOM, texOf(fullBlockForDouble, "_bottom"));
 
         ResourceLocation bottomModel = ModelTemplates.SLAB_BOTTOM.create(slab, map, gen.modelOutput);
@@ -80,130 +87,92 @@ public final class VanillaCopy {
         );
     }
 
-    public static void slabOverride(BlockModelGenerators gen, Block slab,
-                                    ResourceLocation side, ResourceLocation top, ResourceLocation bottom,
-                                    ResourceLocation fullBlockModel) {
-        TextureMapping map = new TextureMapping()
-                .put(TextureSlot.SIDE, side)
-                .put(TextureSlot.TOP,  top)
-                .put(TextureSlot.BOTTOM, bottom);
-
-        ResourceLocation bottomModel = ModelTemplates.SLAB_BOTTOM.create(slab, map, gen.modelOutput);
-        ResourceLocation topModel    = ModelTemplates.SLAB_TOP.create(slab, map, gen.modelOutput);
-
-        BlockModelGenerators.createSlab(
-                slab,
-                mv(bottomModel),
-                mv(topModel),
-                mv(fullBlockModel)
-        );
-    }
-
     /* -------------------------- stairs -------------------------- */
     public static void stairsAuto(BlockModelGenerators gen, Block stairs) {
-        stairsOverride(gen, stairs, texOf(stairs), texOf(stairs, "_top"), texOf(stairs, "_bottom"));
-    }
-
-    public static void stairsOverride(BlockModelGenerators gen, Block stairs,
-                                      ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
         TextureMapping map = new TextureMapping()
-                .put(TextureSlot.SIDE, side)
-                .put(TextureSlot.TOP,  top)
-                .put(TextureSlot.BOTTOM, bottom);
+                .put(TextureSlot.SIDE,   texOf(stairs))
+                .put(TextureSlot.TOP,    texOf(stairs, "_top"))
+                .put(TextureSlot.BOTTOM, texOf(stairs, "_bottom"));
 
         ResourceLocation straight = ModelTemplates.STAIRS_STRAIGHT.create(stairs, map, gen.modelOutput);
         ResourceLocation inner    = ModelTemplates.STAIRS_INNER.create(  stairs, map, gen.modelOutput);
         ResourceLocation outer    = ModelTemplates.STAIRS_OUTER.create(  stairs, map, gen.modelOutput);
 
-        BlockModelGenerators.createStairs(
-                stairs,
-                mv(inner),
-                mv(straight),
-                mv(outer)
+        gen.blockStateOutput.accept(
+                BlockModelGenerators.createStairs(
+                        stairs,
+                        mv(inner),
+                        mv(straight),
+                        mv(outer)
+                )
         );
     }
 
     /* --------------------------- wall --------------------------- */
     public static void wallAuto(BlockModelGenerators gen, Block wall) {
-        wallOverride(gen, wall, texOf(wall), texOf(wall, "_top"), texOf(wall, "_bottom"));
-    }
-
-    public static void wallOverride(BlockModelGenerators gen, Block wall,
-                                    ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
         TextureMapping map = new TextureMapping()
-                .put(TextureSlot.SIDE, side)
-                .put(TextureSlot.TOP,  top)
-                .put(TextureSlot.BOTTOM, bottom);
+                .put(TextureSlot.SIDE,   texOf(wall))
+                .put(TextureSlot.TOP,    texOf(wall, "_top"))
+                .put(TextureSlot.BOTTOM, texOf(wall, "_bottom"));
 
         ResourceLocation post     = ModelTemplates.WALL_POST.create(wall, map, gen.modelOutput);
         ResourceLocation sideLow  = ModelTemplates.WALL_LOW_SIDE.create(wall, map, gen.modelOutput);
         ResourceLocation sideTall = ModelTemplates.WALL_TALL_SIDE.create(wall, map, gen.modelOutput);
 
-        BlockModelGenerators.createWall(
-                wall,
-                mv(post),
-                mv(sideLow),
-                mv(sideTall)
+        gen.blockStateOutput.accept(
+                BlockModelGenerators.createWall(
+                        wall,
+                        mv(post),
+                        mv(sideLow),
+                        mv(sideTall)
+                )
         );
     }
 
     /* --------------------------- fence -------------------------- */
     public static void fenceAuto(BlockModelGenerators gen, Block fence) {
-        fenceOverride(gen, fence, texOf(fence));
-    }
-
-    public static void fenceOverride(BlockModelGenerators gen, Block fence, ResourceLocation texture) {
-        TextureMapping map = new TextureMapping().put(TextureSlot.TEXTURE, texture);
+        TextureMapping map = new TextureMapping().put(TextureSlot.TEXTURE, texOf(fence));
 
         ResourceLocation post = ModelTemplates.FENCE_POST.create(fence, map, gen.modelOutput);
         ResourceLocation side = ModelTemplates.FENCE_SIDE.create(fence, map, gen.modelOutput);
 
-        BlockModelGenerators.createFence(
-                fence,
-                mv(post),
-                mv(side)
+        gen.blockStateOutput.accept(
+                BlockModelGenerators.createFence(
+                        fence,
+                        mv(post),
+                        mv(side)
+                )
         );
     }
 
     /* ------------------------ cross (plants) -------------------- */
     public static void crossAuto(BlockModelGenerators gen, Block... blocks) {
-        for (Block b : blocks) crossOverride(gen, b, texOf(b));
-    }
-
-    public static void crossOverride(BlockModelGenerators gen, Block block, ResourceLocation crossTexture) {
-        TextureMapping map = new TextureMapping().put(TextureSlot.CROSS, crossTexture);
-        ResourceLocation model = ModelTemplates.CROSS.create(block, map, gen.modelOutput);
-        gen.blockStateOutput.accept(
-                MultiVariantGenerator.dispatch(block, mv(model))
-        );
+        for (Block block : blocks) {
+            TextureMapping map = new TextureMapping().put(TextureSlot.CROSS, texOf(block));
+            ResourceLocation model = ModelTemplates.CROSS.create(block, map, gen.modelOutput);
+            gen.blockStateOutput.accept(MultiVariantGenerator.dispatch(block, mv(model)));
+        }
     }
 
     /* ----------------------- glass full blocks ------------------ */
     /** Basic glass: vanilla parent, translucent, AO off. Texture = block/<id>.png */
     public static void glassAuto(BlockModelGenerators gen, Block glassBlock) {
-        glassOverride(gen, glassBlock, texOf(glassBlock));
-    }
-
-    public static void glassOverride(BlockModelGenerators gen, Block glassBlock, ResourceLocation all) {
         var glassTemplate = ModelTemplates.CUBE_ALL.extend()
                 .parent(mcBlock("glass"))
                 .ambientOcclusion(false)
                 .renderType("minecraft:translucent")
                 .build();
 
-        TextureMapping map = new TextureMapping().put(TextureSlot.ALL, all);
+        TextureMapping map = new TextureMapping().put(TextureSlot.ALL, texOf(glassBlock));
         ResourceLocation model = glassTemplate.create(glassBlock, map, gen.modelOutput);
-
         gen.blockStateOutput.accept(MultiVariantGenerator.dispatch(glassBlock, mv(model)));
     }
 
     /* ------------------------- glass panes ---------------------- */
     public static void paneAuto(BlockModelGenerators gen, Block pane) {
-        paneOverride(gen, pane, texOf(pane), texOf(pane, "_top"));
-    }
+        ResourceLocation paneTexture = texOf(pane);
+        ResourceLocation edgeTexture = texOf(pane, "_top");
 
-    public static void paneOverride(BlockModelGenerators gen, Block pane,
-                                    ResourceLocation paneTexture, ResourceLocation edgeTexture) {
         TextureSlot PANE = TextureSlot.create("pane", TextureSlot.ALL);
         TextureSlot EDGE = TextureSlot.create("edge", TextureSlot.ALL);
 
@@ -267,7 +236,6 @@ public final class VanillaCopy {
                 .with(BlockModelGenerators.condition().term(BlockStateProperties.EAST,  false), BlockModelGenerators.variant(plain(noSideAltModel)))
                 .with(BlockModelGenerators.condition().term(BlockStateProperties.SOUTH, false), BlockModelGenerators.variant(plain(noSideAltModel).with(VariantMutator.Y_ROT.withValue(Quadrant.R90))))
                 .with(BlockModelGenerators.condition().term(BlockStateProperties.WEST,  false), BlockModelGenerators.variant(plain(noSideModel).with(VariantMutator.Y_ROT.withValue(Quadrant.R270))));
-
         gen.blockStateOutput.accept(mp);
     }
 
@@ -309,6 +277,65 @@ public final class VanillaCopy {
 
         gen.blockStateOutput.accept(mp);
     }
+
+
+    public static void drillPistonBaseStatesOnly(BlockModelGenerators gen, Block base, @Nullable String extendedModelOverride) {
+        ResourceLocation baseId = BuiltInRegistries.BLOCK.getKey(base);
+        String ns   = baseId.getNamespace();
+        String name = baseId.getPath(); // e.g. drill_piston or sticky_drill_piston
+
+        ResourceLocation retractedModel = rl(ns, "block/" + name);
+        ResourceLocation extendedModel  = rl(ns, "block/" + (extendedModelOverride != null ? extendedModelOverride : (name + "_base")));
+
+        var baseGen = MultiVariantGenerator
+                .dispatch(base, mv(retractedModel))
+                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
+                        .select(Direction.NORTH, VariantMutator.X_ROT.withValue(Quadrant.R0))
+                        .select(Direction.SOUTH, VariantMutator.Y_ROT.withValue(Quadrant.R180))
+                        .select(Direction.EAST,  VariantMutator.Y_ROT.withValue(Quadrant.R90))
+                        .select(Direction.WEST,  VariantMutator.Y_ROT.withValue(Quadrant.R270))
+                        .select(Direction.UP,    VariantMutator.X_ROT.withValue(Quadrant.R270))
+                        .select(Direction.DOWN,  VariantMutator.X_ROT.withValue(Quadrant.R90)))
+                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED)
+                        .select(false, VariantMutator.MODEL.withValue(retractedModel))
+                        .select(true,  VariantMutator.MODEL.withValue(extendedModel)));
+
+        gen.blockStateOutput.accept(baseGen);
+    }
+
+    // --- Blockstates only (head) ---
+// you provide block/<head>.json and block/<head>_short.json
+    public static void drillPistonHeadStatesOnly(BlockModelGenerators gen, Block head) {
+        ResourceLocation headId = BuiltInRegistries.BLOCK.getKey(head);
+        String ns   = headId.getNamespace();
+        String name = headId.getPath(); // e.g. drill_piston_head
+
+        ResourceLocation longModel  = rl(ns, "block/" + name);
+        ResourceLocation shortModel = rl(ns, "block/" + name + "_short");
+
+        var headGen = MultiVariantGenerator
+                .dispatch(head, mv(longModel))
+                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
+                        .select(Direction.NORTH, VariantMutator.X_ROT.withValue(Quadrant.R0))
+                        .select(Direction.SOUTH, VariantMutator.Y_ROT.withValue(Quadrant.R180))
+                        .select(Direction.EAST,  VariantMutator.Y_ROT.withValue(Quadrant.R90))
+                        .select(Direction.WEST,  VariantMutator.Y_ROT.withValue(Quadrant.R270))
+                        .select(Direction.UP,    VariantMutator.X_ROT.withValue(Quadrant.R270))
+                        .select(Direction.DOWN,  VariantMutator.X_ROT.withValue(Quadrant.R90)))
+                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.SHORT)
+                        .select(false, VariantMutator.MODEL.withValue(longModel))
+                        .select(true,  VariantMutator.MODEL.withValue(shortModel)));
+        gen.blockStateOutput.accept(headGen);
+    }
+
+    // --- Client items: point item model to the BLOCK model you provide
+    public static void blockItemFromBlockModel(ItemModelGenerators itemGen, Block block) {
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        ResourceLocation blockModel = rl(id.getNamespace(), "block/" + id.getPath());
+        itemGen.itemModelOutput.accept(block.asItem(), new BlockModelWrapper.Unbaked(blockModel, Collections.emptyList()));
+    }
+
+
 
     /* --------------------------- utils -------------------------- */
     public static ResourceLocation texOf(Block b) { return texOf(b, ""); }

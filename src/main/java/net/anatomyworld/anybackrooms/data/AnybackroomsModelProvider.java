@@ -1,3 +1,4 @@
+// AnybackroomsModelProvider.java
 package net.anatomyworld.anybackrooms.data;
 
 import net.anatomyworld.anybackrooms.AnyBackroomsCore;
@@ -9,13 +10,7 @@ import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.data.models.model.TextureSlot;
-import net.minecraft.client.data.models.model.TexturedModel;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
 
 public final class AnybackroomsModelProvider extends ModelProvider {
 
@@ -23,19 +18,18 @@ public final class AnybackroomsModelProvider extends ModelProvider {
         super(output, AnyBackroomsCore.MOD_ID);
     }
 
-
     @Override
     protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
-        // Simple cubes
+        // Simple cubes you *do* want generated
         TrivialBlock.cubeAll(blockModels,
                 ModBlocks.LOBBY_WOOL.get(),
-                ModBlocks.ACOUSTIC_TILE.get()       // <-- add this so the full block has a blockstate/model
+                ModBlocks.ACOUSTIC_TILE.get()
         );
 
         // Columns
         TrivialBlock.columnAuto(blockModels, ModBlocks.LOBBY_WALLPAPER.get());
 
-        // Lamp (with the earlier path fix)
+        // Lamp
         VanillaCopy.lampAuto(blockModels, ModBlocks.FLUORESCENT_LAMP.get());
 
         // Slab
@@ -56,7 +50,17 @@ public final class AnybackroomsModelProvider extends ModelProvider {
                 TrivialBlock.texOf(ModBlocks.LOBBY_WALLPAPER.get(), "_top")
         );
 
-        // Items
+        // === Drill piston blockstates ONLY (you provide models) ===
+        // Both sticky & non-sticky use the same extended shell model: block/drill_piston_base.json
+        VanillaCopy.drillPistonBaseStatesOnly(blockModels, ModBlocks.DRILL_PISTON.get(),        "drill_piston_base");
+        VanillaCopy.drillPistonBaseStatesOnly(blockModels, ModBlocks.STICKY_DRILL_PISTON.get(), "drill_piston_base");
+        VanillaCopy.drillPistonHeadStatesOnly(blockModels, ModBlocks.DRILL_PISTON_HEAD.get());
+
+        // === Client items (point straight to block model) ===
+        VanillaCopy.blockItemFromBlockModel(itemModels, ModBlocks.DRILL_PISTON.get());
+        VanillaCopy.blockItemFromBlockModel(itemModels, ModBlocks.STICKY_DRILL_PISTON.get());
+
+        // Flat item sample
         itemModels.generateFlatItem(ModItems.ALMOND_WATER.get(), ModelTemplates.FLAT_ITEM);
     }
 
