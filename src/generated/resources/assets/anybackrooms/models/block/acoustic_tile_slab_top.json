@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/slab_top",
-  "textures": {
-    "bottom": "anybackrooms:block/acoustic_tile_bottom",
-    "side": "anybackrooms:block/acoustic_tile",
-    "top": "anybackrooms:block/acoustic_tile_top"
-  }
-}

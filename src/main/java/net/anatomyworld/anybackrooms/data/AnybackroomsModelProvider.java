@@ -11,6 +11,7 @@ import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 
 public final class AnybackroomsModelProvider extends ModelProvider {
 
@@ -51,16 +52,16 @@ public final class AnybackroomsModelProvider extends ModelProvider {
         );
 
         // === Drill piston blockstates ONLY (you provide models) ===
-        // Both sticky & non-sticky use the same extended shell model: block/drill_piston_base.json
         VanillaCopy.drillPistonBaseStatesOnly(blockModels, ModBlocks.DRILL_PISTON.get(),        "drill_piston_base");
-        VanillaCopy.drillPistonBaseStatesOnly(blockModels, ModBlocks.STICKY_DRILL_PISTON.get(), "drill_piston_base");
+        VanillaCopy.drillPistonBaseStatesOnly(blockModels, ModBlocks.STICKY_DRILL_PISTON.get(), "drill_piston_base"); // reuse same shell
+
+        // Head states (expects 4 models as noted above)
         VanillaCopy.drillPistonHeadStatesOnly(blockModels, ModBlocks.DRILL_PISTON_HEAD.get());
 
-        // === Client items (point straight to block model) ===
-        VanillaCopy.blockItemFromBlockModel(itemModels, ModBlocks.DRILL_PISTON.get());
-        VanillaCopy.blockItemFromBlockModel(itemModels, ModBlocks.STICKY_DRILL_PISTON.get());
 
-        // Flat item sample
+
+
+                // Flat item sample
         itemModels.generateFlatItem(ModItems.ALMOND_WATER.get(), ModelTemplates.FLAT_ITEM);
     }
 

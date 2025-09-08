@@ -1,4 +1,3 @@
-// DrillPistonBaseBlock.java
 package net.anatomyworld.anybackrooms.block.custom;
 
 import com.google.common.collect.Lists;
@@ -30,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.PistonType;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.GameEvent.Context;
 import net.minecraft.world.level.material.PushReaction;
@@ -56,7 +56,7 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
     @Override public MapCodec<DrillPistonBaseBlock> codec() { return CODEC; }
 
     public static final BooleanProperty EXTENDED = BlockStateProperties.EXTENDED;
-    private static final Map<Direction, VoxelShape> SHAPES = Shapes.rotateAll(Block.boxZ(16.0, 4.0, 16.0));
+    private static final Map<Direction, VoxelShape> SHAPES = net.minecraft.world.phys.shapes.Shapes.rotateAll(Block.boxZ(16.0, 4.0, 16.0));
 
     private final boolean isSticky;
 
@@ -68,25 +68,20 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
                 .setValue(EXTENDED, Boolean.FALSE));
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, EXTENDED);
-    }
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, EXTENDED); }
 
-    @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return state.getValue(EXTENDED) ? SHAPES.get(state.getValue(FACING)) : Shapes.block();
+    @Override protected VoxelShape getShape(BlockState s, BlockGetter g, BlockPos p, CollisionContext c) {
+        return s.getValue(EXTENDED) ? SHAPES.get(s.getValue(FACING)) : Shapes.block();
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return this.defaultBlockState()
+        return defaultBlockState()
                 .setValue(FACING, ctx.getNearestLookingDirection().getOpposite())
                 .setValue(EXTENDED, Boolean.FALSE);
     }
 
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+    @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         if (!level.isClientSide) checkIfExtend(level, pos, state);
     }
 
@@ -102,13 +97,13 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
         }
     }
 
-    @Override protected boolean useShapeForLightOcclusion(BlockState state) { return state.getValue(EXTENDED); }
-    @Override protected boolean isPathfindable(BlockState state, PathComputationType type) { return false; }
-    @Override protected BlockState rotate(BlockState state, Rotation rot) { return state.setValue(FACING, rot.rotate(state.getValue(FACING))); }
-    @Override public BlockState rotate(BlockState state, LevelAccessor world, BlockPos pos, Rotation dir) { return state.getValue(EXTENDED) ? state : super.rotate(state, world, pos, dir); }
-    @Override protected BlockState mirror(BlockState state, Mirror mirror) { return state.rotate(mirror.getRotation(state.getValue(FACING))); }
+    @Override protected boolean useShapeForLightOcclusion(BlockState s) { return s.getValue(EXTENDED); }
+    @Override protected boolean isPathfindable(BlockState s, PathComputationType t) { return false; }
+    @Override protected BlockState rotate(BlockState s, Rotation r) { return s.setValue(FACING, r.rotate(s.getValue(FACING))); }
+    @Override public BlockState rotate(BlockState s, LevelAccessor w, BlockPos p, Rotation r) { return s.getValue(EXTENDED) ? s : super.rotate(s, w, p, r); }
+    @Override protected BlockState mirror(BlockState s, Mirror m) { return s.rotate(m.getRotation(s.getValue(FACING))); }
 
-    /* -------------------- piston logic -------------------- */
+    /* -------------------- vanilla-like logic with our custom head -------------------- */
 
     private void checkIfExtend(Level level, BlockPos pos, BlockState state) {
         Direction dir = state.getValue(FACING);
@@ -116,20 +111,21 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
 
         if (powered && !state.getValue(EXTENDED)) {
             if ((new PistonStructureResolver(level, pos, dir, true)).resolve()) {
-                level.blockEvent(pos, this, 0, dir.get3DDataValue());
+                level.blockEvent(pos, this, 0, dir.get3DDataValue()); // extend
             }
         } else if (!powered && state.getValue(EXTENDED)) {
-            BlockPos headPos = pos.relative(dir, 2);
-            BlockState at = level.getBlockState(headPos);
-            int trigger = 1;
+            // ✅ probe ONE block ahead (the head/moving base), not two
+            BlockPos probe = pos.relative(dir);
+            BlockState at = level.getBlockState(probe);
+            int trigger = 1; // retract (sticky will PULL on id==1)
 
             if (at.is(Blocks.MOVING_PISTON) && at.getValue(MovingPistonBlock.FACING) == dir) {
-                BlockEntity be = level.getBlockEntity(headPos);
+                BlockEntity be = level.getBlockEntity(probe);
                 if (be instanceof PistonMovingBlockEntity moving) {
                     if (moving.isExtending() &&
                             (moving.getProgress(0.0F) < 0.5F || level.getGameTime() == moving.getLastTicked() ||
                                     (level instanceof ServerLevel))) {
-                        trigger = 2;
+                        trigger = 2; // short retract (no pull)
                     }
                 }
             }
@@ -164,21 +160,31 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
             if (!powered && id == 0) return false;
         }
 
-        if (id == 0) { // extend
+        if (id == 0) {
+            // EXTEND
             if (EventHooks.onPistonMovePre(level, pos, dir, true)) return false;
             if (!moveBlocks(level, pos, dir, true)) return false;
 
             level.setBlock(pos, extended, 67);
             level.playSound(null, pos, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.25F + 0.6F);
             level.gameEvent(GameEvent.BLOCK_ACTIVATE, pos, Context.of(extended));
-        } else if (id == 1 || id == 2) { // retract
+        } else if (id == 1 || id == 2) {
+            // RETRACT
             if (EventHooks.onPistonMovePre(level, pos, dir, false)) return false;
+
+            // Inform the drill runtime if we're about to sticky-pull
+            if (this.isSticky && level instanceof ServerLevel sl) {
+                BlockPos headPos = pos.relative(dir);
+                DrillPistonHeadBlock.DrillRuntime.onStickyRetractBegin(sl, headPos, dir);
+            }
 
             BlockEntity be = level.getBlockEntity(pos.relative(dir));
             if (be instanceof PistonMovingBlockEntity moving) moving.finalTick();
 
             BlockState movingBase = Blocks.MOVING_PISTON.defaultBlockState()
-                    .setValue(MovingPistonBlock.FACING, dir);
+                    .setValue(MovingPistonBlock.FACING, dir)
+                    .setValue(MovingPistonBlock.TYPE, this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
+
             level.setBlock(pos, movingBase, 276);
             level.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(
                     pos, movingBase,
@@ -189,7 +195,7 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
             movingBase.updateNeighbourShapes(level, pos, 2);
 
             if (this.isSticky) {
-                BlockPos ahead2 = pos.offset(dir.getStepX() * 2, dir.getStepY() * 2, dir.getStepZ() * 2);
+                BlockPos ahead2 = pos.relative(dir, 2);
                 BlockState bs = level.getBlockState(ahead2);
                 boolean cancelled = false;
 
@@ -207,8 +213,10 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
                     if (id == 1 && !bs.isAir() &&
                             isPushable(bs, level, ahead2, dir.getOpposite(), false, dir) &&
                             (bs.getPistonPushReaction() == PushReaction.NORMAL || bs.is(Blocks.PISTON) || bs.is(Blocks.STICKY_PISTON))) {
+                        // ✅ sticky pull path
                         this.moveBlocks(level, pos, dir, false);
                     } else {
+                        // just drop the head
                         level.removeBlock(pos.relative(dir), false);
                     }
                 }
@@ -248,7 +256,9 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
 
     private boolean moveBlocks(Level level, BlockPos pos, Direction dir, boolean extending) {
         BlockPos headPos = pos.relative(dir);
-        if (!extending && level.getBlockState(headPos).is(Blocks.PISTON_HEAD)) {
+
+        // ✅ remove OUR custom head on retract (vanilla checks PISTON_HEAD)
+        if (!extending && level.getBlockState(headPos).is(ModBlocks.DRILL_PISTON_HEAD.get())) {
             level.setBlock(headPos, Blocks.AIR.defaultBlockState(), 276);
         }
 
@@ -256,8 +266,8 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
         if (!resolver.resolve()) return false;
 
         Map<BlockPos, BlockState> snapshot = Maps.newHashMap();
-        var toPush = resolver.getToPush();
-        var pushedStates = Lists.<BlockState>newArrayList();
+        List<BlockPos> toPush = resolver.getToPush();
+        List<BlockState> pushedStates = Lists.newArrayList();
 
         for (BlockPos bp : toPush) {
             BlockState s = level.getBlockState(bp);
@@ -265,7 +275,7 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
             snapshot.put(bp, s);
         }
 
-        var toDestroy = resolver.getToDestroy();
+        List<BlockPos> toDestroy = resolver.getToDestroy();
         BlockState[] destroyed = new BlockState[toPush.size() + toDestroy.size()];
         Direction move = extending ? dir : dir.getOpposite();
         int i = 0;
@@ -286,24 +296,25 @@ public class DrillPistonBaseBlock extends DirectionalBlock {
             BlockPos dest = bp.relative(move);
             snapshot.remove(dest);
 
-            BlockState moving = Blocks.MOVING_PISTON.defaultBlockState().setValue(MovingPistonBlock.FACING, dir);
+            BlockState moving = Blocks.MOVING_PISTON.defaultBlockState()
+                    .setValue(MovingPistonBlock.FACING, dir)
+                    .setValue(MovingPistonBlock.TYPE, this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
+
             level.setBlock(dest, moving, 324);
             level.setBlockEntity(MovingPistonBlock.newMovingBlockEntity(dest, moving, pushedStates.get(k), dir, extending, false));
             destroyed[i++] = bs;
         }
 
         if (extending) {
+            // Use our custom head as the carried block
             BlockState head = ModBlocks.DRILL_PISTON_HEAD.get().defaultBlockState()
                     .setValue(net.minecraft.world.level.block.piston.PistonHeadBlock.FACING, dir)
                     .setValue(net.minecraft.world.level.block.piston.PistonHeadBlock.TYPE,
-                            this.isSticky ? net.minecraft.world.level.block.state.properties.PistonType.STICKY
-                                    : net.minecraft.world.level.block.state.properties.PistonType.DEFAULT);
+                            this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
 
             BlockState moving = Blocks.MOVING_PISTON.defaultBlockState()
                     .setValue(MovingPistonBlock.FACING, dir)
-                    .setValue(MovingPistonBlock.TYPE, this.isSticky
-                            ? net.minecraft.world.level.block.state.properties.PistonType.STICKY
-                            : net.minecraft.world.level.block.state.properties.PistonType.DEFAULT);
+                    .setValue(MovingPistonBlock.TYPE, this.isSticky ? PistonType.STICKY : PistonType.DEFAULT);
 
             snapshot.remove(headPos);
             level.setBlock(headPos, moving, 324);

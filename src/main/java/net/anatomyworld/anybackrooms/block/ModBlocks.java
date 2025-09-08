@@ -105,7 +105,8 @@ public final class ModBlocks {
             BLOCKS.registerBlock("drill_piston",
                     props -> new DrillPistonBaseBlock(false, props),
                     BlockBehaviour.Properties.ofFullCopy(Blocks.PISTON)
-                            .strength(1.5F).sound(SoundType.METAL)
+                            .sound(SoundType.METAL)
+                            .strength(1.5F)
                             .noLootTable()
             );
 
@@ -113,7 +114,8 @@ public final class ModBlocks {
             BLOCKS.registerBlock("sticky_drill_piston",
                     props -> new DrillPistonBaseBlock(true, props),
                     BlockBehaviour.Properties.ofFullCopy(Blocks.STICKY_PISTON)
-                            .strength(1.5F).sound(SoundType.METAL)
+                            .sound(SoundType.METAL)
+                            .strength(1.5F)
                             .noLootTable()
             );
 
@@ -124,6 +126,8 @@ public final class ModBlocks {
                             .noOcclusion()
                             .noLootTable()
             );
+
+
 
 
     // The slab itself.

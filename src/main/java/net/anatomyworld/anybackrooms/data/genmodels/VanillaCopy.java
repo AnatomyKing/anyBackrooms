@@ -3,18 +3,15 @@ package net.anatomyworld.anybackrooms.data.genmodels;
 import com.mojang.math.Quadrant;
 import net.anatomyworld.anybackrooms.AnyBackroomsCore;
 import net.minecraft.client.data.models.BlockModelGenerators;
+
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.MultiVariant;
 import net.minecraft.client.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.data.models.model.TextureSlot;
-import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.data.models.model.*;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.block.model.VariantMutator;
-import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -23,8 +20,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.PistonType;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.Optional;
+
 
 /**
  * Vanilla-like generators for NeoForge 1.21.x client datagen.
@@ -278,63 +275,66 @@ public final class VanillaCopy {
         gen.blockStateOutput.accept(mp);
     }
 
-
     public static void drillPistonBaseStatesOnly(BlockModelGenerators gen, Block base, @Nullable String extendedModelOverride) {
         ResourceLocation baseId = BuiltInRegistries.BLOCK.getKey(base);
         String ns   = baseId.getNamespace();
-        String name = baseId.getPath(); // e.g. drill_piston or sticky_drill_piston
+        String name = baseId.getPath();
 
         ResourceLocation retractedModel = rl(ns, "block/" + name);
         ResourceLocation extendedModel  = rl(ns, "block/" + (extendedModelOverride != null ? extendedModelOverride : (name + "_base")));
 
         var baseGen = MultiVariantGenerator
                 .dispatch(base, mv(retractedModel))
-                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
+                .with(PropertyDispatch.modify(BlockStateProperties.FACING)
                         .select(Direction.NORTH, VariantMutator.X_ROT.withValue(Quadrant.R0))
                         .select(Direction.SOUTH, VariantMutator.Y_ROT.withValue(Quadrant.R180))
                         .select(Direction.EAST,  VariantMutator.Y_ROT.withValue(Quadrant.R90))
                         .select(Direction.WEST,  VariantMutator.Y_ROT.withValue(Quadrant.R270))
                         .select(Direction.UP,    VariantMutator.X_ROT.withValue(Quadrant.R270))
                         .select(Direction.DOWN,  VariantMutator.X_ROT.withValue(Quadrant.R90)))
-                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED)
+                .with(PropertyDispatch.modify(BlockStateProperties.EXTENDED)
                         .select(false, VariantMutator.MODEL.withValue(retractedModel))
                         .select(true,  VariantMutator.MODEL.withValue(extendedModel)));
 
         gen.blockStateOutput.accept(baseGen);
     }
 
-    // --- Blockstates only (head) ---
-// you provide block/<head>.json and block/<head>_short.json
+    /* ======================= HEAD (states only) ======================= */
+    /** Assumes you provide these models:
+     *  block/drill_piston_head.json
+     *  block/drill_piston_head_short.json
+     *  block/drill_piston_head_sticky.json
+     *  block/drill_piston_head_sticky_short.json
+     */
     public static void drillPistonHeadStatesOnly(BlockModelGenerators gen, Block head) {
         ResourceLocation headId = BuiltInRegistries.BLOCK.getKey(head);
         String ns   = headId.getNamespace();
-        String name = headId.getPath(); // e.g. drill_piston_head
+        String name = headId.getPath();
 
-        ResourceLocation longModel  = rl(ns, "block/" + name);
-        ResourceLocation shortModel = rl(ns, "block/" + name + "_short");
+        ResourceLocation LONG_DEFAULT   = rl(ns, "block/" + name);
+        ResourceLocation SHORT_DEFAULT  = rl(ns, "block/" + name + "_short");
+        ResourceLocation LONG_STICKY    = rl(ns, "block/" + name + "_sticky");
+        ResourceLocation SHORT_STICKY   = rl(ns, "block/" + name + "_sticky_short");
 
         var headGen = MultiVariantGenerator
-                .dispatch(head, mv(longModel))
-                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
+                .dispatch(head, mv(LONG_DEFAULT))
+                .with(PropertyDispatch.modify(BlockStateProperties.FACING)
                         .select(Direction.NORTH, VariantMutator.X_ROT.withValue(Quadrant.R0))
                         .select(Direction.SOUTH, VariantMutator.Y_ROT.withValue(Quadrant.R180))
                         .select(Direction.EAST,  VariantMutator.Y_ROT.withValue(Quadrant.R90))
                         .select(Direction.WEST,  VariantMutator.Y_ROT.withValue(Quadrant.R270))
                         .select(Direction.UP,    VariantMutator.X_ROT.withValue(Quadrant.R270))
                         .select(Direction.DOWN,  VariantMutator.X_ROT.withValue(Quadrant.R90)))
-                .with(PropertyDispatch.modify(net.minecraft.world.level.block.state.properties.BlockStateProperties.SHORT)
-                        .select(false, VariantMutator.MODEL.withValue(longModel))
-                        .select(true,  VariantMutator.MODEL.withValue(shortModel)));
+                // Cross-dispatch SHORT x TYPE so each combo picks the right model.
+                .with(PropertyDispatch.modify(BlockStateProperties.SHORT, BlockStateProperties.PISTON_TYPE)
+                        .select(false, PistonType.DEFAULT, VariantMutator.MODEL.withValue(LONG_DEFAULT))
+                        .select(true,  PistonType.DEFAULT, VariantMutator.MODEL.withValue(SHORT_DEFAULT))
+                        .select(false, PistonType.STICKY,  VariantMutator.MODEL.withValue(LONG_STICKY))
+                        .select(true,  PistonType.STICKY,  VariantMutator.MODEL.withValue(SHORT_STICKY))
+                );
+
         gen.blockStateOutput.accept(headGen);
     }
-
-    // --- Client items: point item model to the BLOCK model you provide
-    public static void blockItemFromBlockModel(ItemModelGenerators itemGen, Block block) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
-        ResourceLocation blockModel = rl(id.getNamespace(), "block/" + id.getPath());
-        itemGen.itemModelOutput.accept(block.asItem(), new BlockModelWrapper.Unbaked(blockModel, Collections.emptyList()));
-    }
-
 
 
     /* --------------------------- utils -------------------------- */
